@@ -9,3 +9,5 @@ tests/storageStates/*
 
 debug/*
 !debug/.gitkeep
+
+tests/support/attribute-counter.json

@@ -2,10 +2,13 @@ const { Given, When, Then } = require('@cucumber/cucumber');
 const { expect } = require('@playwright/test');
 const ChangeRecordingPage = require('../pages/ChangeRecordingPage');
 const RequestsPage = require('../pages/RequestsPage');
+const UserRolePage = require('../pages/UserRolePage');
 
-// Shared across every "reached directly via the sidebar" page (Change Recording, Requests, ...)
-// rather than duplicated per page - Cucumber's step registry is global, so a second identical
-// phrase in requests.steps.js would collide with this one instead of adding a new step.
+// Shared across every "reached directly via the sidebar" page (Change Recording, Requests, User
+// Roles ...) rather than duplicated per page - Cucumber's step registry is global, so a second
+// identical phrase in requests.steps.js/user_role.steps.js would collide with this one instead of
+// adding a new step. "User Roles" (ported from a separate project) extends this same step rather
+// than redefining it.
 When('the user navigates to the {string} page', async function (pageName) {
   if (pageName === 'Change Recording') {
     this.changeRecordingPage = this.changeRecordingPage || new ChangeRecordingPage(this.page);
@@ -13,6 +16,9 @@ When('the user navigates to the {string} page', async function (pageName) {
   } else if (pageName === 'Requests') {
     this.requestsPage = this.requestsPage || new RequestsPage(this.page);
     await this.requestsPage.open();
+  } else if (pageName === 'User Roles') {
+    this.userRolePage = this.userRolePage || new UserRolePage(this.page);
+    await this.userRolePage.open();
   }
 });
 

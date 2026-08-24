@@ -144,6 +144,53 @@ class RequestsPage extends BasePage {
   async viewRequest(requestId) {
     await this.rowFor(requestId).getByRole('link', { name: 'View' }).click();
   }
+
+  /**
+   * Approval section (upper limit override + comment + Approve), ported from a separate
+   * Pakquality automation project - ties into this same detailDialog ("Request Overview") rather
+   * than a separately-confirmed modal, since this suite already confirmed that dialog live for
+   * the plain View flow. No click was recorded between opening the dialog and finding the upper
+   * limit field in the source project, so a separate "Approval" tab/section may not exist at all
+   * here either - findApprovalSectionTab() is optional, not required.
+   */
+  async findApprovalSectionTab() {
+    const candidates = [this.detailDialog.getByRole('tab', { name: /Approval/i }), this.detailDialog.getByText('Approval', { exact: true })];
+    for (const c of candidates) {
+      if ((await c.count()) > 0 && (await c.first().isVisible().catch(() => false))) return c.first();
+    }
+    return null;
+  }
+
+  upperLimitInputCandidates() {
+    return [
+      this.detailDialog.getByRole('spinbutton', { name: 'New Value' }).first(),
+      this.detailDialog.getByRole('spinbutton', { name: /New Value/i }).first(),
+      this.detailDialog.locator('input[type="number"]:visible').first(),
+    ];
+  }
+
+  /** Shared field shape with the Spec Change Request dialog's own comment field (see
+   *  CampaignExecutionPage.js's specChangeRequestCommentInputCandidates) - only this Approval
+   *  section's version was ever confirmed via recording. */
+  approvalCommentInputCandidates() {
+    return [
+      this.detailDialog.getByRole('textbox', { name: /Enter your approval/i }),
+      this.detailDialog.getByRole('textbox', { name: /comment/i }),
+      this.detailDialog.locator('textarea'),
+      this.detailDialog.locator('input[placeholder*="comment" i]'),
+    ];
+  }
+
+  approveButton() {
+    return this.detailDialog.getByRole('button', { name: 'Approve' });
+  }
+
+  async findVisible(candidates) {
+    for (const c of candidates) {
+      if ((await c.count()) > 0 && (await c.first().isVisible().catch(() => false))) return c.first();
+    }
+    return null;
+  }
 }
 
 module.exports = RequestsPage;
