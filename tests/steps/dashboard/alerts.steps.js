@@ -2,6 +2,7 @@ const { Given, When, Then } = require('@cucumber/cucumber');
 const { expect } = require('@playwright/test');
 const CampaignExecutionPage = require('../../pages/dashboard/CampaignExecutionPage');
 const AlertsPage = require('../../pages/dashboard/AlertsPage');
+const { setLastCampaignId } = require('../../support/campaignState');
 
 // Reliably out-of-spec against any Bounds-type test attribute this suite has encountered (all
 // use small numeric ranges, e.g. "29.16 - 34.24") - verified live.
@@ -24,15 +25,19 @@ Given('the user has created a campaign using the created Test Protocol', async f
   await this.dashboardPage.liquidAnalysis.startNewLiquidAnalysis();
   await this.dashboardPage.liquidAnalysis.searchAndSelectFormula('HBC-3647');
   const uniqueSuffix = Date.now().toString().slice(-6);
+  const campaignId = `FAILC${uniqueSuffix}`;
   await this.dashboardPage.liquidAnalysis.fillBatchDetails({
     batchId: `FAIL${uniqueSuffix}`,
-    campaignId: `FAILC${uniqueSuffix}`,
+    campaignId,
     customer: 'Monster',
     flavor: 'test',
     fgItemNumber: 'FG Item Number',
     format: 'Format',
     batchTank: '6',
   });
+  // Tracked for the Spec Change Request approval scenario below, which searches for this exact
+  // campaign on the Requests page (see campaignState.js).
+  setLastCampaignId(campaignId);
   await this.dashboardPage.liquidAnalysis.submitBatch();
 });
 

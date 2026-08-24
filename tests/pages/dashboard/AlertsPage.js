@@ -72,6 +72,37 @@ class AlertsPage extends BasePage {
   }
 
   /**
+   * Ported from a separate Pakquality automation project (restructured to follow this suite's
+   * conventions) - the CONFIRM path through this dialog, for a scenario that deliberately DOES
+   * want to raise a real Spec Change Request and get it approved (see
+   * spec_change_request.steps.js), unlike every other scenario in this suite, which always
+   * cancels (see cancelSpecChangeRequest's doc comment). No recording confirmed the comment
+   * field's exact accessible name/placeholder in the source project - best-effort candidates,
+   * scoped to this dialog specifically, pending live verification. The confirming button
+   * ("Continue") was confirmed against this same app by that separate project's own live
+   * testing.
+   */
+  specChangeRequestCommentInputCandidates() {
+    const dialog = this.specChangeRequestDialog();
+    return [
+      dialog.getByRole('textbox', { name: /comment/i }),
+      dialog.locator('textarea'),
+      dialog.locator('input[placeholder*="comment" i]'),
+    ];
+  }
+
+  async findVisible(candidates) {
+    for (const c of candidates) {
+      if ((await c.count()) > 0 && (await c.first().isVisible().catch(() => false))) return c.first();
+    }
+    return null;
+  }
+
+  async confirmSpecChangeRequest() {
+    await this.specChangeRequestDialog().getByRole('button', { name: 'Continue' }).click();
+  }
+
+  /**
    * A fourth consecutive out-of-spec reading against the same test pauses that filler - verified
    * live: a "Resume Filler" button appears (replacing the round tabs/Add Test controls for that
    * filler) and its "Enter Value" input becomes disabled. Only one filler is ever paused in this
