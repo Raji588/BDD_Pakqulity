@@ -69,3 +69,5 @@ Feature: Requests
   Scenario: View a request
     When the user clicks "View" for request "CRQ-0366"
     Then the request details should be displayed
+
+    
