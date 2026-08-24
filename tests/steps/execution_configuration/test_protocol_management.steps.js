@@ -2,11 +2,24 @@ const { Given, When, Then } = require('@cucumber/cucumber');
 const { expect } = require('@playwright/test');
 const TestProtocolManagementPage = require('../../pages/execution_configuration/TestProtocolManagementPage');
 const CampaignExecutionPage = require('../../pages/dashboard/CampaignExecutionPage');
+const DocumentControlPage = require('../../pages/DocumentControlPage');
+const CoreConfigurationPage = require('../../pages/CoreConfigurationPage');
 
+// Extended (not duplicated - Cucumber's step registry is global) to also cover
+// "Document Control" > "Liquid Analysis" and "Configuration" > "Core Configuration", both ported
+// from a separate project - extend this same step rather than test_protocol_management.steps.js's
+// own file if a future page needs the same two-level "navigate via sidebar menu > submenu" step
+// text.
 Given('the user navigates to {string} > {string}', async function (menuName, subMenuName) {
-  this.testProtocolPage = this.testProtocolPage || new TestProtocolManagementPage(this.page);
   if (menuName === 'Configuration' && subMenuName === 'Execution Configuration') {
+    this.testProtocolPage = this.testProtocolPage || new TestProtocolManagementPage(this.page);
     await this.testProtocolPage.open();
+  } else if (menuName === 'Document Control' && subMenuName === 'Liquid Analysis') {
+    this.documentControlPage = this.documentControlPage || new DocumentControlPage(this.page);
+    await this.documentControlPage.open();
+  } else if (menuName === 'Configuration' && subMenuName === 'Core Configuration') {
+    this.coreConfigurationPage = this.coreConfigurationPage || new CoreConfigurationPage(this.page);
+    await this.coreConfigurationPage.open();
   }
 });
 

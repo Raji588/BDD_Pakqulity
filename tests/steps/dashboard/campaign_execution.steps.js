@@ -2,6 +2,7 @@ const { Given, Then, When } = require('@cucumber/cucumber');
 const { expect } = require('@playwright/test');
 const CampaignExecutionPage = require('../../pages/dashboard/CampaignExecutionPage');
 const { grantFullAccess } = require('../../support/permissionBypass');
+const { setLastCampaignId } = require('../../support/campaignState');
 
 Given('the user is already logged in', async function () {
   // Navigate to the app to initialize the origin context, then inject a client-side
@@ -39,6 +40,9 @@ When('the user fills in the batch details', async function (dataTable) {
   const uniqueSuffix = Date.now().toString().slice(-6);
   details.batchId = `${details.batchId}${uniqueSuffix}`;
   details.campaignId = `${details.campaignId}${uniqueSuffix}`;
+  // Tracked for document_control.feature, which searches for this exact
+  // campaign by ID - see campaignState.js.
+  setLastCampaignId(details.campaignId);
   await this.dashboardPage.liquidAnalysis.fillBatchDetails(details);
 });
 

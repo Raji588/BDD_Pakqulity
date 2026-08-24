@@ -5,6 +5,8 @@ const RequestsPage = require('../pages/RequestsPage');
 Then('the {string} page should be displayed', async function (pageName) {
   if (pageName === 'Requests') {
     await expect(this.requestsPage.pageTitle).toBeVisible();
+  } else if (pageName === 'User Roles') {
+    await expect(this.userRolePage.pageTitle).toBeVisible();
   }
 });
 
@@ -59,11 +61,25 @@ When('the user enters {string} in the Test Attribute filter', async function (va
 // Shared with Test Protocol Management ("New Test Protocol" button) rather than duplicated -
 // Cucumber's step registry is global, so a second identical phrase in
 // test_protocol_management.steps.js would collide instead of adding a new step.
+//
+// The Document Control / Core Configuration / User Role branch (ported from a separate project)
+// is gated on that page being the active one rather than named individually per button - those
+// pages' quick-filter/modal buttons (Pending Review, All Campaigns, Approved, Save, Update,
+// Delete, Archive, ...) are plain accessible names with no risk of colliding with another page's
+// button of the same name, since only one of these page objects is ever active per scenario.
 When('the user clicks the {string} button', async function (buttonName) {
   if (buttonName === 'Filter') {
     await this.requestsPage.clickFilter();
   } else if (buttonName === 'New Test Protocol') {
     await this.testProtocolPage.clickNewTestProtocol();
+  } else if (this.documentControlPage) {
+    await this.documentControlPage.clickNamedButton(buttonName);
+  } else if (this.coreConfigurationPage) {
+    await this.coreConfigurationPage.clickNamedButton(buttonName);
+  } else if (this.userRolePage) {
+    await this.userRolePage.clickNamedButton(buttonName);
+  } else if (buttonName === 'Approve') {
+    await this.requestsPage.approveButton().click();
   }
 });
 
