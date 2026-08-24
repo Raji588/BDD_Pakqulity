@@ -1,0 +1,11 @@
+node_modules/
+.env
+test-results/
+playwright-report/
+npm-debug.log*
+
+tests/storageStates/*
+!tests/storageStates/.gitkeep
+
+debug/*
+!debug/.gitkeep

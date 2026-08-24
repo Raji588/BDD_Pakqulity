@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx cucumber-js *)",
+      "Bash(node inspect_cip6.tmp.js)",
+      "Bash(node inspect_cip7.tmp.js)",
+      "Bash(node inspect_cip_multi.tmp.js)",
+      "Bash(node inspect_cip_row2.tmp.js)",
+      "Bash(node -c tests/pages/dashboard/CampaignExecutionPage.js)",
+      "Bash(node -c tests/steps/dashboard/campaign_execution.steps.js)",
+      "Bash(npm test *)"
+    ]
+  }
+}
