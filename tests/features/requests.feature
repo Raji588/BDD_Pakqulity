@@ -67,7 +67,11 @@ Feature: Requests
 
   @requestView
   Scenario: View a request
-    When the user clicks "View" for request "CRQ-0366"
+    # CRQ-0366 isn't guaranteed to be on the default unfiltered/first-page list - search for it
+    # first so the row (and its "View" link) is actually rendered before clicking it, same as the
+    # "Search requests by keyword" scenario above.
+    When the user searches for "CRQ-0366" in the Requests search field
+    And the user clicks "View" for request "CRQ-0366"
     Then the request details should be displayed
 
     
