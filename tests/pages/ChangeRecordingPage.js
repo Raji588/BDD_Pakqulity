@@ -79,9 +79,16 @@ class ChangeRecordingPage extends BasePage {
   }
 
   /** Data rows only (excludes the header row) - a data row is identified by containing at
-   *  least one `cell` (the header row's cells are `columnheader`s instead). */
+   *  least one `cell` (the header row's cells are `columnheader`s instead). Unlike
+   *  RequestsPage's table, this table's empty-results placeholder still renders a `cell` (just
+   *  containing the "No data" text) rather than none at all, so it isn't excluded by the `has`
+   *  filter alone - confirmed live: a zero-match search/filter otherwise leaves this locator
+   *  resolving to that placeholder row, and callers reading its cell text got literal "No data"
+   *  instead of a real empty-row signal. Excluded explicitly here instead. */
   dataRows() {
-    return this.page.getByRole('row').filter({ has: this.page.getByRole('cell') });
+    return this.page.getByRole('row')
+      .filter({ has: this.page.getByRole('cell') })
+      .filter({ hasNotText: 'No data' });
   }
 
   protocolNameCell(row) {
