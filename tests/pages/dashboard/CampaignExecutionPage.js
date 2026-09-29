@@ -482,7 +482,21 @@ class LiquidAnalysisPage extends BasePage {
     await this.completeCampaignButton.click(); // verified live - opens the "Pending tests found" dialog
     await this.completeCampaignConfirmationInput.click();
     await this.completeCampaignConfirmationInput.fill(status);
+
+    // Wait for the status change to actually be saved - this is the scenario's last step, and
+    // returning right after the click let the After hook close the browser while the request was
+    // still in flight, so the campaign never reached "Pending Review" in Document Control.
+    const saved = this.page.waitForResponse(
+      (r) => r.url().includes('/api/') && ['POST', 'PUT', 'PATCH'].includes(r.request().method()),
+      { timeout: 30000 }
+    );
     await this.completeCampaignSubmitButton.click();
+    const response = await saved;
+    if (!response.ok()) {
+      const body = await response.text().catch(() => '');
+      throw new Error(`Setting the campaign status to "${status}" failed: ${response.status()} ${response.url()}\n${body.slice(0, 500)}`);
+    }
+    await this.completeCampaignSubmitButton.waitFor({ state: 'hidden', timeout: 30000 });
   }
 }
 

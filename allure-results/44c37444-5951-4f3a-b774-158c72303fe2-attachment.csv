@@ -1,0 +1,13 @@
+section,typeOfCheck,frequency,lowerLimit,upperLimit
+Section 1,Analysis,Analysis,1,100
+Section 1,Analysis,Beginning,1,100
+Section 1,Analysis,End,1,100
+Section 1,HPLC,Analysis,1,100
+Section 1,HPLC,Beginning,1,100
+Section 1,HPLC,End,1,100
+Section 2,Analysis,Analysis,1,100
+Section 2,Analysis,Beginning,1,100
+Section 2,Analysis,End,1,100
+Section 2,HPLC,Analysis,1,100
+Section 2,HPLC,Beginning,1,100
+Section 2,HPLC,End,1,100

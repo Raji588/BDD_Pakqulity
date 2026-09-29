@@ -42,14 +42,18 @@ Then('a search result row for that campaign should appear as the first entry', a
   if (!this.campaignId) {
     throw new Error('No campaign ID is stored - the search step must run first.');
   }
-  const row = await this.documentControlPage.firstResultRow();
-  if (!row) {
-    throw new Error('No rows found in the search results table.');
-  }
-  const rowText = await row.innerText().catch(() => '');
-  if (!rowText.includes(this.campaignId)) {
-    throw new Error(`Expected the first search result row to contain "${this.campaignId}", but found: "${rowText.trim()}"`);
-  }
+  // Re-read until the debounced server-side search returns - a single read right after typing can
+  // catch the table's interim "No data" state.
+  await expect(async () => {
+    const row = await this.documentControlPage.firstResultRow();
+    if (!row) {
+      throw new Error('No rows found in the search results table.');
+    }
+    const rowText = await row.innerText().catch(() => '');
+    if (!rowText.includes(this.campaignId)) {
+      throw new Error(`Expected the first search result row to contain "${this.campaignId}", but found: "${rowText.trim()}"`);
+    }
+  }).toPass({ timeout: 30000 });
 });
 
 When('the user clicks the edit icon for the first search result row', async function () {

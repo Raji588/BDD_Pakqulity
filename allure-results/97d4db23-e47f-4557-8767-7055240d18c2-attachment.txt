@@ -1,0 +1,3 @@
+Failed API calls:
+400 PATCH https://azrwusdevpkqltybe.proudtree-9dce783f.westus.azurecontainerapps.io/api/core/cip-protocol/462
+  {"message":"Each section must have at least one attribute","details":[{"message":"Each section must have at least one attribute","path":["sections",0,"attributes"],"type":"array.min","context":{"limit":1,"value":[],"label":"sections[0].attributes","key":"attributes"}}]}

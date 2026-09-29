@@ -34,7 +34,8 @@ When('the user searches for {string} in the Requests search field', async functi
 });
 
 Then('the request result for {string} should be displayed', async function (term) {
-  await expect(this.requestsPage.rowFor(term).first()).toBeVisible();
+  // Debounced server-side search takes ~1.5-3s - longer than the 5s default allows under load.
+  await expect(this.requestsPage.rowFor(term).first()).toBeVisible({ timeout: 15000 });
 });
 
 // One step per AutoComplete filter (Request ID, Campaign, Test Attribute) rather than a single
@@ -85,7 +86,7 @@ When('the user clicks the {string} button', async function (buttonName) {
 
 Then('the request {string} should be displayed in the Requests table', async function (requestId) {
   const row = this.requestsPage.rowFor(requestId);
-  await expect(row).toBeVisible();
+  await expect(row).toBeVisible({ timeout: 15000 });
   await expect(this.requestsPage.requestIdCell(row)).toHaveText(requestId);
 });
 

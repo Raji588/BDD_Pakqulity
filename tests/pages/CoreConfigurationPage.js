@@ -286,6 +286,15 @@ class CoreConfigurationPage extends BasePage {
     const okButton = this.timePickerOkButton();
     await okButton.waitFor({ state: 'visible', timeout: 30000 });
     await okButton.click();
+
+    // Wait for this panel's close animation to finish - until it is marked hidden it still matches
+    // timePanelColumnCell()'s "not hidden" selector, so a following field (e.g. End Time right
+    // after Start Time) would target this closing panel instead of its own.
+    await this.page
+      .locator('.ant-picker-dropdown:not(.ant-picker-dropdown-hidden)')
+      .first()
+      .waitFor({ state: 'hidden', timeout: 10000 })
+      .catch(() => {});
   }
 }
 

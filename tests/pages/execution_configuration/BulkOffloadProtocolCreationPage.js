@@ -33,7 +33,9 @@ class BulkOffloadProtocolCreationPage extends BasePage {
     this.saveProtocolButton = page.getByRole('button', { name: 'Save Protocol' });
 
     // --- Protocol list --- verified live
-    this.searchInput = page.getByPlaceholder('Search');
+    // The app header also has a global "Search" box (role searchbox, type=search), so matching
+    // by placeholder alone hits two elements - the page's own table search is the plain textbox.
+    this.searchInput = page.getByRole('textbox', { name: 'Search', exact: true });
     this.deleteConfirmButton = page.getByRole('dialog').getByRole('button', { name: 'Delete', exact: true });
   }
 
@@ -41,7 +43,7 @@ class BulkOffloadProtocolCreationPage extends BasePage {
     await this.page.goto('/dashboard?page=1');
     await this.configurationButton.click();
     await this.executionConfigurationLink.click();
-    await this.bulkOffloadProtocolTab.click();
+    await this.waitForProtocolList('BOL', () => this.bulkOffloadProtocolTab.click());
   }
 
   async openNewBulkOffloadProtocolForm() {
@@ -201,12 +203,10 @@ class BulkOffloadProtocolCreationPage extends BasePage {
     await this.saveProtocolButton.click();
   }
 
-  /** Filters the Bulk Offload protocol list table down to rows matching `name` (debounced,
-   *  hence the wait). */
+  /** Filters the Bulk Offload protocol list table down to rows matching `name`, waiting for the
+   *  search's response. */
   async searchBulkOffloadProtocol(name) {
-    await this.searchInput.click();
-    await this.searchInput.fill(name);
-    await this.page.waitForTimeout(1000);
+    await this.searchProtocolList('BOL', this.searchInput, name);
   }
 
   /** The Bulk Offload Protocol list's name cell is plain text with no `title` attribute (same

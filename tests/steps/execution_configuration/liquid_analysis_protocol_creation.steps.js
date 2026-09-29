@@ -2,6 +2,13 @@ const { Given, When, Then } = require('@cucumber/cucumber');
 const { expect } = require('@playwright/test');
 const CampaignExecutionPage = require('../../pages/dashboard/CampaignExecutionPage');
 
+// The feature file's literal names (jhnm -> jhnm_updated) get a per-run suffix after their first
+// segment (jhnm123456 -> jhnm123456_updated), so the create/update/delete chain still links up by
+// name but a leftover protocol from an earlier failed run can never cause "Protocol name already
+// taken". Module scope keeps the same suffix for every scenario in this cucumber-js process.
+const RUN_SUFFIX = Date.now().toString().slice(-6);
+const runName = (name) => name.replace(/^([^_]+)/, `$1${RUN_SUFFIX}`);
+
 When('the user navigates to the new protocol form', async function () {
   // Independent of "the dashboard page is loaded" - Protocol Creation is reached via the
   // sidebar (present on every page), not through the dashboard specifically.
@@ -11,9 +18,7 @@ When('the user navigates to the new protocol form', async function () {
 
 When('the user fills in the protocol details', async function (dataTable) {
   const details = Object.fromEntries(dataTable.rows().map(([field, value]) => [field, value]));
-  // Unlike the standalone-scenario version of this step (see git history), this one uses the
-  // literal name given - the create/update/delete scenarios chain by exact protocol name
-  // (jhnm -> jhnm_updated -> deleted), so a per-run random suffix would break that lookup.
+  details.name = runName(details.name);
   // A protocol with this exact name can already exist (a previous run that failed before the
   // delete scenario ran, someone testing by hand with the same name, ...), which blocks
   // creation with a disabled Save button ("Protocol name already taken") rather than a
@@ -32,12 +37,14 @@ When('the user fills in the attribute rows and saves the protocol', { timeout: 3
 });
 
 Then('the protocol {string} should be created successfully', async function (name) {
+  name = runName(name);
   await this.dashboardPage.protocolCreation.navigateToProtocolList();
   await this.dashboardPage.protocolCreation.searchProtocol(name);
   await expect(this.dashboardPage.protocolCreation.protocolRow(name)).toBeVisible();
 });
 
 Given('the protocol {string} is available in the protocol list', async function (name) {
+  name = runName(name);
   this.dashboardPage = this.dashboardPage || new CampaignExecutionPage(this.page);
   await this.dashboardPage.protocolCreation.navigateToProtocolList();
   await this.dashboardPage.protocolCreation.searchProtocol(name);
@@ -45,12 +52,14 @@ Given('the protocol {string} is available in the protocol list', async function 
 });
 
 When('the user opens the protocol {string} for editing', async function (name) {
+  name = runName(name);
   this.editingProtocolName = name; // remembered so updateProtocolDetails can return here
   await this.dashboardPage.protocolCreation.openProtocolForEditing(name);
 });
 
 When('the user updates the protocol details', async function (dataTable) {
   const details = Object.fromEntries(dataTable.rows().map(([field, value]) => [field, value]));
+  details.name = runName(details.name);
   // Same "name already taken" problem as creation (see that step) can hit a rename too - a
   // protocol already named "jhnm_updated" blocks Save with no catchable error. Clearing it out
   // navigates away from the edit form, so reopen the original protocol we were editing.
@@ -66,12 +75,14 @@ When('the user saves the updated protocol', async function () {
 });
 
 Then('the protocol {string} should be updated successfully', async function (name) {
+  name = runName(name);
   await this.dashboardPage.protocolCreation.navigateToProtocolList();
   await this.dashboardPage.protocolCreation.searchProtocol(name);
   await expect(this.dashboardPage.protocolCreation.protocolRow(name)).toBeVisible();
 });
 
 When('the user opens the protocol {string} for deletion', async function (name) {
+  name = runName(name);
   await this.dashboardPage.protocolCreation.openProtocolForDeletion(name);
 });
 
@@ -80,6 +91,7 @@ When('the user confirms the protocol deletion', async function () {
 });
 
 Then('the protocol {string} should be deleted successfully', async function (name) {
+  name = runName(name);
   await this.dashboardPage.protocolCreation.navigateToProtocolList();
   await this.dashboardPage.protocolCreation.searchProtocol(name);
   await expect(this.dashboardPage.protocolCreation.protocolRow(name)).toHaveCount(0);

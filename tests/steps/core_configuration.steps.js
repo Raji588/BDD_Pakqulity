@@ -2,6 +2,11 @@ const { When, Then } = require('@cucumber/cucumber');
 const { expect } = require('@playwright/test');
 const { nextAttributeName } = require('../support/attributeCounter');
 
+// Feature-file Test Name -> the per-run suffixed name actually typed (see "the user enters the
+// Test Name" step).
+const RUN_SUFFIX = Date.now().toString().slice(-6);
+const runNames = new Map();
+
 /**
  * Backs core_configuration.feature. Ported from a separate Pakquality automation project,
  * restructured to follow this suite's conventions - this.coreConfigurationPage is created by the
@@ -195,6 +200,11 @@ When('the user clicks the New {string} Test button', async function (testType) {
 // replaces existing content either way, and this.testName is what the row-lookup/action-icon
 // steps below track (shared with the Shift scenario too).
 When('the user enters the Test Name {string}', async function (testName) {
+  // Per-run suffix so a row left over from an earlier failed run (same literal name) can't make
+  // Save fail as a duplicate - the row steps below map the feature's literal back via runNames.
+  const suffixed = `${testName} ${RUN_SUFFIX}`;
+  runNames.set(testName, suffixed);
+  testName = suffixed;
   this.testName = testName;
   const input = await this.coreConfigurationPage.findVisible(this.coreConfigurationPage.testNameInputCandidates(this.coreConfigurationPage.openModal));
   if (!input) {
@@ -220,18 +230,22 @@ When('the user adds the value {string}', async function (value) {
 // Generic row lookup - reused for Micro Test, Chem Test, and Shift rows, since the underlying
 // logic (rowFor()/rowsFor() by visible text) doesn't depend on which type the row belongs to.
 Then('the {string} row should appear in the table', async function (rowText) {
+  rowText = runNames.get(rowText) || rowText;
   const row = this.coreConfigurationPage.rowFor(rowText);
   await expect(row).toBeVisible({ timeout: 30000 });
 });
 
 Then('the {string} row should no longer appear in the table', async function (rowText) {
+  rowText = runNames.get(rowText) || rowText;
   const rows = this.coreConfigurationPage.rowsFor(rowText);
   await expect(rows).toHaveCount(0, { timeout: 30000 });
 });
 
 // Generic Edit/Delete icon clicks for the current row (tracked via this.testName) - reused for
 // Micro Test, Chem Test, and Shift scenarios.
-When('the user clicks the edit icon for the test row', async function () {
+// 2 min: waiting up to 30s for the row plus the multi-strategy icon lookup can exceed the global
+// 60s step limit (hooks.js) on a slow dev server.
+When('the user clicks the edit icon for the test row', { timeout: 120 * 1000 }, async function () {
   if (!this.testName) {
     throw new Error('No test name is stored - "the user enters the Test Name" (or Shift Name) must run first.');
   }
@@ -245,7 +259,7 @@ When('the user clicks the edit icon for the test row', async function () {
   await editButton.click();
 });
 
-When('the user clicks the delete icon for the test row', async function () {
+When('the user clicks the delete icon for the test row', { timeout: 120 * 1000 }, async function () {
   if (!this.testName) {
     throw new Error('No test name is stored - "the user enters the Test Name" (or Shift Name) must run first.');
   }

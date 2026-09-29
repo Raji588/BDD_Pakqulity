@@ -17,7 +17,9 @@ class RequestsPage extends BasePage {
     this.pageTitle = page.getByRole('heading', { name: 'Requests', exact: true });
     this.filtersToggle = page.getByText('Filters', { exact: true });
 
-    this.searchInput = page.getByPlaceholder('Search');
+    // The app header also has a global "Search" box (role searchbox, type=search), so matching
+    // by placeholder alone hits two elements - the page's own table search is the plain textbox.
+    this.searchInput = page.getByRole('textbox', { name: 'Search', exact: true });
 
     this.requestIdInput = this.fieldLabel('Request ID').locator('xpath=following-sibling::div[1]//input');
     this.statusSelector = this.fieldLabel('Status').locator(
@@ -61,6 +63,7 @@ class RequestsPage extends BasePage {
    * suggestion, otherwise clicking "Filter" leaves the list unfiltered).
    */
   async fillAutocompleteFilter(fieldName, value) {
+    await this.waitForSpinners(); // initial table load must finish first, or its late response can overwrite the filtered one
     const input = this.fieldLabel(fieldName).locator('xpath=following-sibling::div[1]//input');
     await input.click();
     await input.fill(value);
@@ -69,16 +72,12 @@ class RequestsPage extends BasePage {
   }
 
   async openStatusFilter() {
+    await this.waitForSpinners();
     await this.statusSelector.click();
   }
 
   async selectStatus(status) {
-    const dropdown = this.activeSelectDropdown();
-    const alreadyOpen = await dropdown.isVisible().catch(() => false);
-    if (!alreadyOpen) {
-      await this.openStatusFilter();
-    }
-    await this.activeSelectDropdown().locator('.ant-select-item-option', { hasText: status }).click();
+    await this.selectDropdownOption(this.activeSelectDropdown(), () => this.openStatusFilter(), status);
   }
 
   /** Picks the calendar's "today" cell - any valid, always-enabled date is enough to exercise
@@ -108,6 +107,7 @@ class RequestsPage extends BasePage {
 
   /** Debounced server-side keyword search, separate from the per-field Filters panel. */
   async search(term) {
+    await this.waitForSpinners(); // initial table load must finish first, or its late response can overwrite the search results
     await this.searchInput.click();
     await this.searchInput.fill(term);
     await this.page.waitForTimeout(1200);

@@ -31,7 +31,9 @@ class CipProtocolCreationPage extends BasePage {
     this.saveProtocolButton = page.getByRole('button', { name: 'Save Protocol' });
 
     // --- Protocol list --- verified live
-    this.searchInput = page.getByPlaceholder('Search');
+    // The app header also has a global "Search" box (role searchbox, type=search), so matching
+    // by placeholder alone hits two elements - the page's own table search is the plain textbox.
+    this.searchInput = page.getByRole('textbox', { name: 'Search', exact: true });
     this.deleteConfirmButton = page.getByRole('dialog').getByRole('button', { name: 'Delete', exact: true });
   }
 
@@ -39,7 +41,7 @@ class CipProtocolCreationPage extends BasePage {
     await this.page.goto('/dashboard?page=1');
     await this.configurationButton.click();
     await this.executionConfigurationLink.click();
-    await this.cipProtocolTab.click();
+    await this.waitForProtocolList('CIP', () => this.cipProtocolTab.click());
   }
 
   async openNewCipProtocolForm() {
@@ -196,11 +198,9 @@ class CipProtocolCreationPage extends BasePage {
     await this.saveProtocolButton.click();
   }
 
-  /** Filters the CIP protocol list table down to rows matching `name` (debounced, hence the wait). */
+  /** Filters the CIP protocol list table down to rows matching `name`, waiting for the search's response. */
   async searchCipProtocol(name) {
-    await this.searchInput.click();
-    await this.searchInput.fill(name);
-    await this.page.waitForTimeout(1000);
+    await this.searchProtocolList('CIP', this.searchInput, name);
   }
 
   /** The CIP Protocol list's name cell is plain text with no `title` attribute (unlike the Test

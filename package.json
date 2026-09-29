@@ -9,11 +9,13 @@
     "test": "cucumber-js",
     "test:tags": "cucumber-js --tags",
     "install:browsers": "playwright install",
-    "record": "node tests/record-setup.js"
+    "record": "node tests/record-setup.js",
+    "test:parallel": "node tests/run-parallel.js"
   },
   "devDependencies": {
     "@cucumber/cucumber": "^13.2.1",
     "@playwright/test": "^1.47.0",
+    "allure-cucumberjs": "^3.12.2",
     "dotenv": "^16.4.5",
     "playwright": "^1.47.0"
   }

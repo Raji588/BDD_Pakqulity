@@ -34,13 +34,17 @@ When('the user searches for {string} in the Change Recording search field', asyn
 });
 
 Then('the change recording results for {string} should be displayed', async function (term) {
-  const rows = this.changeRecordingPage.dataRows();
-  await expect(rows.first()).toBeVisible();
-  const count = await rows.count();
-  for (let i = 0; i < count; i++) {
-    const text = await this.changeRecordingPage.protocolNameCell(rows.nth(i)).innerText();
-    expect(text.toLowerCase()).toContain(term.toLowerCase());
-  }
+  // Re-checked until the debounced server-side search (~1.5-3s) replaces the unfiltered rows - a
+  // single read can still see the previous, unfiltered table.
+  await expect(async () => {
+    const rows = this.changeRecordingPage.dataRows();
+    await expect(rows.first()).toBeVisible({ timeout: 1000 });
+    const count = await rows.count();
+    for (let i = 0; i < count; i++) {
+      const text = await this.changeRecordingPage.protocolNameCell(rows.nth(i)).innerText();
+      expect(text.toLowerCase()).toContain(term.toLowerCase());
+    }
+  }).toPass({ timeout: 15000 });
 });
 
 When('the user opens the change recording status filter', async function () {

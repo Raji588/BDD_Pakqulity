@@ -38,7 +38,9 @@ class WaterQualityProtocolCreationPage extends BasePage {
     this.saveProtocolButton = page.getByRole('button', { name: 'Save Protocol' });
 
     // --- Protocol list --- verified live
-    this.searchInput = page.getByPlaceholder('Search');
+    // The app header also has a global "Search" box (role searchbox, type=search), so matching
+    // by placeholder alone hits two elements - the page's own table search is the plain textbox.
+    this.searchInput = page.getByRole('textbox', { name: 'Search', exact: true });
     this.deleteConfirmButton = page.getByRole('dialog').getByRole('button', { name: 'Delete', exact: true });
   }
 
@@ -46,7 +48,7 @@ class WaterQualityProtocolCreationPage extends BasePage {
     await this.page.goto('/dashboard?page=1');
     await this.configurationButton.click();
     await this.executionConfigurationLink.click();
-    await this.waterQualityProtocolTab.click();
+    await this.waitForProtocolList('WQT', () => this.waterQualityProtocolTab.click());
   }
 
   async openNewWaterQualityProtocolForm() {
@@ -166,12 +168,10 @@ class WaterQualityProtocolCreationPage extends BasePage {
     await this.saveProtocolButton.click();
   }
 
-  /** Filters the Water Quality protocol list table down to rows matching `name` (debounced,
-   *  hence the wait). */
+  /** Filters the Water Quality protocol list table down to rows matching `name`, waiting for the
+   *  search's response. */
   async searchWaterQualityProtocol(name) {
-    await this.searchInput.click();
-    await this.searchInput.fill(name);
-    await this.page.waitForTimeout(1000);
+    await this.searchProtocolList('WQT', this.searchInput, name);
   }
 
   /** The Water Quality Protocol list's name cell is plain text with no `title` attribute (same

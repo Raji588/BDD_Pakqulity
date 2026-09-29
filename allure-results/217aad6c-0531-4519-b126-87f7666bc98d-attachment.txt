@@ -1,0 +1,3 @@
+Failed API calls:
+400 PATCH https://azrwusdevpkqltybe.proudtree-9dce783f.westus.azurecontainerapps.io/api/core/wqt-protocol/466
+  {"message":"At least one test attribute is required","details":[{"message":"At least one test attribute is required","path":["testAttributes"],"type":"array.min","context":{"limit":1,"value":[],"label":"testAttributes","key":"testAttributes"}}]}

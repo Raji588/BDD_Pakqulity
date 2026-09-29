@@ -10,7 +10,9 @@ class ChangeRecordingPage extends BasePage {
 
     this.navLink = page.getByRole('link', { name: 'Change Recording' });
 
-    this.searchInput = page.getByPlaceholder('Search');
+    // The app header also has a global "Search" box (role searchbox, type=search), so matching
+    // by placeholder alone hits two elements - the page's own table search is the plain textbox.
+    this.searchInput = page.getByRole('textbox', { name: 'Search', exact: true });
     this.searchClearIcon = page.locator('.ant-input-clear-icon');
 
     // The only Ant Select filter within the page content - the facility select in the navbar
@@ -23,8 +25,14 @@ class ChangeRecordingPage extends BasePage {
     this.statusFilterClearIcon = this.statusFilter.locator('.ant-select-clear');
   }
 
+  /** Waits for this page's own data (the change-logs API) to load. The URL switches instantly on
+   *  click but the previous page (e.g. the Dashboard, which has its own "Search" textbox and table)
+   *  stays rendered until then - acting earlier types into / reads that previous page instead. */
   async open() {
+    const loaded = this.page.waitForResponse((r) => r.url().includes('/api/auth/change-logs'), { timeout: 30000 });
     await this.navLink.click();
+    await loaded;
+    await this.waitForSpinners();
   }
 
   /** AntD keeps closed dropdown panels hidden in the DOM rather than removing them - same
@@ -35,6 +43,7 @@ class ChangeRecordingPage extends BasePage {
   }
 
   async openStatusFilter() {
+    await this.waitForSpinners();
     await this.statusFilterSelector.click();
   }
 
@@ -48,14 +57,7 @@ class ChangeRecordingPage extends BasePage {
    * the filter" step, so this can't assume the dropdown is already open.
    */
   async selectStatus(status) {
-    const dropdown = this.activeStatusDropdown();
-    const alreadyOpen = await dropdown.isVisible().catch(() => false);
-    if (!alreadyOpen) {
-      await this.openStatusFilter();
-    }
-    await this.activeStatusDropdown()
-      .locator('.ant-select-item-option', { hasText: status })
-      .click();
+    await this.selectDropdownOption(this.activeStatusDropdown(), () => this.openStatusFilter(), status);
     await this.page.waitForTimeout(1000); // let the filtered table settle before the caller reads it
   }
 
@@ -68,6 +70,7 @@ class ChangeRecordingPage extends BasePage {
   /** Debounced server-side search - the wait lets the table finish re-rendering before the
    *  caller reads it. */
   async search(term) {
+    await this.waitForSpinners(); // initial table load must finish first, or its late response can overwrite the search results
     await this.searchInput.click();
     await this.searchInput.fill(term);
     await this.page.waitForTimeout(1000);

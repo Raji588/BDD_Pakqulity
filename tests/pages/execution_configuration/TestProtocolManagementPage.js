@@ -18,7 +18,9 @@ class TestProtocolManagementPage extends BasePage {
     // nav link (first in DOM), so `.last()` reaches the actual page title.
     this.pageTitle = page.getByText('Execution Configuration', { exact: true }).last();
 
-    this.searchInput = page.getByPlaceholder('Search');
+    // The app header also has a global "Search" box (role searchbox, type=search), so matching
+    // by placeholder alone hits two elements - the page's own table search is the plain textbox.
+    this.searchInput = page.getByRole('textbox', { name: 'Search', exact: true });
     this.newTestProtocolButton = page.getByRole('button', { name: 'New Test Protocol' });
 
     this.filtersToggle = page.getByText('Filters', { exact: true });
@@ -51,10 +53,9 @@ class TestProtocolManagementPage extends BasePage {
   async open() {
     await this.page.goto('/dashboard?page=1');
     await this.configurationButton.click();
-    await this.executionConfigurationLink.click();
     // The table's data loads asynchronously after landing on the page - verified live, reading
-    // the table right after navigation can catch it still empty.
-    await this.page.waitForTimeout(3000);
+    // the table right after navigation can catch it still empty, so wait for the list API.
+    await this.waitForProtocolList('GEN', () => this.executionConfigurationLink.click());
   }
 
   tab(name) {
@@ -74,9 +75,7 @@ class TestProtocolManagementPage extends BasePage {
   }
 
   async search(term) {
-    await this.searchInput.click();
-    await this.searchInput.fill(term);
-    await this.page.waitForTimeout(1200);
+    await this.searchProtocolList('GEN', this.searchInput, term);
   }
 
   /** The "Filters" heading and its expand/collapse toggle button are siblings under the same

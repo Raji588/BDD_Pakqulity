@@ -3,7 +3,7 @@ const { chromium } = require('playwright');
 const fs = require('fs');
 const config = require('../../config/config');
 
-setDefaultTimeout(180 * 1000);
+setDefaultTimeout(60 * 1000);
 
 let browser;
 
@@ -41,12 +41,29 @@ Before(async function (scenario) {
   this.context = await browser.newContext(contextOptions);
   this.page = await this.context.newPage();
   this.baseUrl = config.baseURL;
+
+  // Failed API calls, attached to the report if the scenario fails - a save that silently leaves
+  // its form open usually has a 4xx/5xx behind it whose toast is gone by the time a step times out.
+  this.apiErrors = [];
+  this.page.on('response', async (response) => {
+    if (response.status() < 400 || !response.url().includes('/api/')) return;
+    const body = await response.text().catch(() => '');
+    this.apiErrors.push(`${response.status()} ${response.request().method()} ${response.url()}\n  ${body.slice(0, 500)}`);
+  });
 });
 
 After(async function (scenario) {
   if (scenario.result?.status === Status.FAILED && this.page) {
-    const screenshot = await this.page.screenshot();
-    this.attach(screenshot, 'image/png');
+    // Bounded + non-fatal: a hung page shouldn't turn the diagnostic itself into a second failure.
+    const screenshot = await this.page.screenshot({ timeout: 10000 }).catch(() => null);
+    if (screenshot) this.attach(screenshot, 'image/png');
+
+    const uiErrors = await this.page
+      .locator('.ant-form-item-explain-error:visible, .ant-message-notice:visible, .ant-notification-notice:visible, .ant-alert-error:visible')
+      .allInnerTexts()
+      .catch(() => []);
+    if (uiErrors.length) this.attach(`Visible error messages:\n${uiErrors.join('\n')}`, 'text/plain');
+    if (this.apiErrors.length) this.attach(`Failed API calls:\n${this.apiErrors.join('\n')}`, 'text/plain');
   }
   if (!config.headless && this.page) {
     await this.page.waitForTimeout(2000);
