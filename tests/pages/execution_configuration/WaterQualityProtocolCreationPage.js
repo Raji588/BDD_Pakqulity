@@ -188,7 +188,15 @@ class WaterQualityProtocolCreationPage extends BasePage {
   // Actions column order verified live: edit, delete - no copy button, unlike the CIP/Bulk
   // Offload Protocol lists' edit/copy/delete.
   async openWaterQualityProtocolForEditing(name) {
-    await this.rowActionButton(name, 0).click();
+    await this.openEditFormAndWaitForAttributes(
+      () => this.rowActionButton(name, 0).click(),
+      this.testAttributeField('testAttributeId')
+    );
+  }
+
+  /** Saves an edited protocol - see BasePage.saveAndCaptureResponse. */
+  async saveProtocolChanges() {
+    return this.saveAndCaptureResponse(this.saveProtocolButton);
   }
 
   async openWaterQualityProtocolForDeletion(name) {

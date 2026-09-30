@@ -60,28 +60,32 @@ Feature: Execution Configuration - Test Protocol Management
 
   @testProtocolStatus
   Scenario: A test protocol's status is shown as Enabled
-    Then the protocol row for "Bug_test" should show status "Enabled"
+    Given a test protocol has been created for this run
+    Then that protocol's row should show status "Enabled"
 
   @testProtocolEdit
   Scenario: Edit an existing test protocol
-    When the user clicks the edit action for protocol "Bug_test"
+    Given a test protocol has been created for this run
+    When the user clicks the edit action for that protocol
     Then the "Edit Test Protocol" form should be displayed
 
   @testProtocolDuplicate
   Scenario: Duplicate an existing test protocol
-    When the user clicks the copy action for protocol "Bug_test"
-    Then the "New Test Protocol" form should be displayed pre-filled from "Bug_test"
+    Given a test protocol has been created for this run
+    When the user clicks the copy action for that protocol
+    Then the "New Test Protocol" form should be displayed pre-filled from that protocol
     When the user saves the duplicated protocol under a unique name
     Then a duplicated protocol row should appear in the Test Protocol table
 
   @testProtocolHistory
   Scenario: View change history for a test protocol
-    When the user clicks the history action for protocol "Bug_test"
-    Then the change history for "Bug_test" should be displayed
+    Given a test protocol has been created for this run
+    When the user clicks the history action for that protocol
+    Then the change history for that protocol should be displayed
 
   @testProtocolDelete
   Scenario: Delete a test protocol
-    Given a disposable test protocol has been created
+    Given a test protocol has been created for this run
     When the user searches for that protocol in the Test Protocol search box
     And the user clicks the delete action for that protocol
     Then a deletion confirmation dialog should be displayed

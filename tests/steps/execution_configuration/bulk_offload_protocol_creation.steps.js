@@ -89,14 +89,19 @@ When('the user opens the Bulk Offload protocol for editing', async function () {
 When('the user updates the Bulk Offload protocol name', async function () {
   const updatedName = `${bulkOffloadProtocolName}_updated`;
   await this.dashboardPage.bulkOffloadProtocolCreation.enterBulkOffloadProtocolName(updatedName);
-  bulkOffloadProtocolName = updatedName;
+  // Only adopted as bulkOffloadProtocolName once the save succeeds - otherwise the delete scenario would
+  // look for a renamed protocol that doesn't exist and leave the original behind.
+  this.pendingProtocolName = updatedName;
 });
 
 When('the user saves the Bulk Offload changes', async function () {
-  await this.dashboardPage.bulkOffloadProtocolCreation.saveProtocol();
+  this.saveResponse = await this.dashboardPage.bulkOffloadProtocolCreation.saveProtocolChanges();
 });
 
 Then('the Bulk Offload protocol should be updated successfully', async function () {
+  expect(this.saveResponse, 'Save sent no PATCH/PUT request').not.toBeNull();
+  expect(this.saveResponse.ok(), `Save failed: ${this.saveResponse.status()} ${await this.saveResponse.text()}`).toBe(true);
+  bulkOffloadProtocolName = this.pendingProtocolName;
   await expect(this.dashboardPage.bulkOffloadProtocolCreation.saveProtocolButton).not.toBeVisible();
 });
 

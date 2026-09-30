@@ -83,14 +83,19 @@ When('the user opens the CIP protocol for editing', async function () {
 When('the user updates the CIP protocol name', async function () {
   const updatedName = `${cipProtocolName}_updated`;
   await this.dashboardPage.cipProtocolCreation.enterCipProtocolName(updatedName);
-  cipProtocolName = updatedName;
+  // Only adopted as cipProtocolName once the save succeeds - otherwise the delete scenario would
+  // look for a renamed protocol that doesn't exist and leave the original behind.
+  this.pendingProtocolName = updatedName;
 });
 
 When('the user saves the changes', async function () {
-  await this.dashboardPage.cipProtocolCreation.saveProtocol();
+  this.saveResponse = await this.dashboardPage.cipProtocolCreation.saveProtocolChanges();
 });
 
 Then('the CIP protocol should be updated successfully', async function () {
+  expect(this.saveResponse, 'Save sent no PATCH/PUT request').not.toBeNull();
+  expect(this.saveResponse.ok(), `Save failed: ${this.saveResponse.status()} ${await this.saveResponse.text()}`).toBe(true);
+  cipProtocolName = this.pendingProtocolName;
   await expect(this.dashboardPage.cipProtocolCreation.saveProtocolButton).not.toBeVisible();
 });
 

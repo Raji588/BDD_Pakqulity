@@ -73,14 +73,19 @@ When('the user opens the Water Quality protocol for editing', async function () 
 When('the user updates the Water Quality protocol name', async function () {
   const updatedName = `${waterQualityProtocolName}_updated`;
   await this.dashboardPage.waterQualityProtocolCreation.enterWaterQualityProtocolName(updatedName);
-  waterQualityProtocolName = updatedName;
+  // Only adopted as waterQualityProtocolName once the save succeeds - otherwise the delete scenario would
+  // look for a renamed protocol that doesn't exist and leave the original behind.
+  this.pendingProtocolName = updatedName;
 });
 
 When('the user saves the Water Quality changes', async function () {
-  await this.dashboardPage.waterQualityProtocolCreation.saveProtocol();
+  this.saveResponse = await this.dashboardPage.waterQualityProtocolCreation.saveProtocolChanges();
 });
 
 Then('the Water Quality protocol should be updated successfully', async function () {
+  expect(this.saveResponse, 'Save sent no PATCH/PUT request').not.toBeNull();
+  expect(this.saveResponse.ok(), `Save failed: ${this.saveResponse.status()} ${await this.saveResponse.text()}`).toBe(true);
+  waterQualityProtocolName = this.pendingProtocolName;
   await expect(this.dashboardPage.waterQualityProtocolCreation.saveProtocolButton).not.toBeVisible();
 });
 

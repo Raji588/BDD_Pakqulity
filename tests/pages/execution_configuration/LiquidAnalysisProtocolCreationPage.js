@@ -68,7 +68,15 @@ class LiquidAnalysisProtocolCreationPage extends BasePage {
   // Actions column order (verified live, no accessible names on these icon buttons): edit,
   // copy, history, delete.
   async openProtocolForEditing(name) {
-    await this.rowActionButton(name, 0).click();
+    await this.openEditFormAndWaitForAttributes(
+      () => this.rowActionButton(name, 0).click(),
+      this.page.locator('#attributes_0_testAttributeId')
+    );
+  }
+
+  /** Saves an edited protocol - see BasePage.saveAndCaptureResponse. */
+  async saveProtocolChanges() {
+    return this.saveAndCaptureResponse(this.saveProtocolButton);
   }
 
   async openProtocolForDeletion(name) {
@@ -92,8 +100,11 @@ class LiquidAnalysisProtocolCreationPage extends BasePage {
     await this.searchProtocol(name);
     if ((await this.protocolRow(name).count()) > 0) {
       await this.openProtocolForDeletion(name);
+      const deleted = this.page
+        .waitForResponse((r) => r.request().method() === 'DELETE' && r.url().includes('/api/core/'), { timeout: 30000 })
+        .catch(() => {});
       await this.confirmDeletion();
-      await this.page.waitForTimeout(1000);
+      await deleted;
     }
   }
 

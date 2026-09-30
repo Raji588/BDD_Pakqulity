@@ -71,11 +71,20 @@ When('the user updates the protocol details', async function (dataTable) {
 });
 
 When('the user saves the updated protocol', async function () {
-  await this.dashboardPage.protocolCreation.saveProtocol();
+  this.saveResponse = await this.dashboardPage.protocolCreation.saveProtocolChanges();
 });
 
 Then('the protocol {string} should be updated successfully', async function (name) {
   name = runName(name);
+  if (!this.saveResponse) {
+    const invalid = await this.dashboardPage.protocolCreation.invalidFormFields();
+    const activity = this.dashboardPage.protocolCreation.lastSaveActivity || [];
+    throw new Error(
+      `Save sent no PATCH/PUT request. Invalid form fields:\n  ${invalid.join('\n  ') || '(none)'}` +
+        `\nOther activity during save:\n  ${activity.join('\n  ') || '(none)'}`
+    );
+  }
+  expect(this.saveResponse.ok(), `Save failed: ${this.saveResponse.status()} ${await this.saveResponse.text()}`).toBe(true);
   await this.dashboardPage.protocolCreation.navigateToProtocolList();
   await this.dashboardPage.protocolCreation.searchProtocol(name);
   await expect(this.dashboardPage.protocolCreation.protocolRow(name)).toBeVisible();

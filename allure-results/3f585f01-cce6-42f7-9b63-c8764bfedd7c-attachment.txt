@@ -1,0 +1,21 @@
+Failed API calls:
+401 GET https://azrwusdevpkqltybe.proudtree-9dce783f.westus.azurecontainerapps.io/api/execution/passing-criteria-value-change-requests?requestStatus=PENDING&paginate=false
+  
+401 GET https://azrwusdevpkqltybe.proudtree-9dce783f.westus.azurecontainerapps.io/api/core/user-facilities
+  
+401 GET https://azrwusdevpkqltybe.proudtree-9dce783f.westus.azurecontainerapps.io/api/notifications?page=1&limit=20
+  
+401 GET https://azrwusdevpkqltybe.proudtree-9dce783f.westus.azurecontainerapps.io/api/core/protocols?protocolType=BOL&isActive=true&paginate=false
+  
+401 GET https://azrwusdevpkqltybe.proudtree-9dce783f.westus.azurecontainerapps.io/api/execution/protocol-instances?page=1&limit=10&status=PROG,PAUS,LNDN,HOLD,PEND
+  
+401 GET https://azrwusdevpkqltybe.proudtree-9dce783f.westus.azurecontainerapps.io/api/core/filler-line-mappings?paginate=false
+  
+401 GET https://azrwusdevpkqltybe.proudtree-9dce783f.westus.azurecontainerapps.io/api/core/protocols?protocolType=CIP&isActive=true&paginate=false
+  
+401 GET https://azrwusdevpkqltybe.proudtree-9dce783f.westus.azurecontainerapps.io/api/core/protocols?protocolType=WQT&isActive=true&paginate=false
+  
+401 GET https://azrwusdevpkqltybe.proudtree-9dce783f.westus.azurecontainerapps.io/api/core/protocols?protocolType=GEN&isDeleted=false&page=1&limit=10
+  
+401 GET https://azrwusdevpkqltybe.proudtree-9dce783f.westus.azurecontainerapps.io/api/core/user-facilities
+  

@@ -83,82 +83,82 @@ Then('the {string} form should be displayed', async function (formName) {
   }
 });
 
-Then('the protocol row for {string} should show status {string}', async function (protocolName, status) {
-  const row = this.testProtocolPage.rowFor(protocolName);
+Then("that protocol's row should show status {string}", async function (status) {
+  const row = await this.testProtocolPage.findRow(runProtocolName);
   await expect(this.testProtocolPage.statusCell(row)).toHaveText(status);
 });
 
-When('the user clicks the edit action for protocol {string}', async function (protocolName) {
-  await this.testProtocolPage.clickEditAction(protocolName);
+When('the user clicks the edit action for that protocol', async function () {
+  await this.testProtocolPage.clickEditAction(runProtocolName);
 });
 
-When('the user clicks the copy action for protocol {string}', async function (protocolName) {
-  await this.testProtocolPage.clickCopyAction(protocolName);
+When('the user clicks the copy action for that protocol', async function () {
+  await this.testProtocolPage.clickCopyAction(runProtocolName);
 });
 
 // The copy action's on-screen title is "Duplicate Test Protocol", not "Add Test Protocol" (the
 // {string} here is the button's label, "New Test Protocol", not a literal title match) - verified
 // live.
-Then('the {string} form should be displayed pre-filled from {string}', async function (formName, protocolName) {
+Then('the {string} form should be displayed pre-filled from that protocol', async function (formName) {
   await expect(this.testProtocolPage.duplicateProtocolFormTitle).toBeVisible();
-  await expect(this.testProtocolPage.nameInput).toHaveValue(protocolName);
+  await expect(this.testProtocolPage.nameInput).toHaveValue(runProtocolName);
 });
 
 When('the user saves the duplicated protocol under a unique name', async function () {
-  await this.testProtocolPage.saveDuplicateWithUniqueName();
+  this.saveResponse = await this.testProtocolPage.saveDuplicateWithUniqueName();
 });
 
 Then('a duplicated protocol row should appear in the Test Protocol table', async function () {
-  await expect(this.testProtocolPage.rowFor(this.testProtocolPage.lastDuplicateName)).toBeVisible();
+  expect(this.saveResponse, 'Save sent no POST request').not.toBeNull();
+  expect(this.saveResponse.ok(), `Save failed: ${this.saveResponse.status()} ${await this.saveResponse.text()}`).toBe(true);
+  await this.testProtocolPage.open();
+  await expect(await this.testProtocolPage.findRow(this.testProtocolPage.lastDuplicateName)).toBeVisible();
 });
 
-When('the user clicks the history action for protocol {string}', async function (protocolName) {
-  await this.testProtocolPage.clickHistoryAction(protocolName);
+When('the user clicks the history action for that protocol', async function () {
+  await this.testProtocolPage.clickHistoryAction(runProtocolName);
 });
 
-Then('the change history for {string} should be displayed', async function (protocolName) {
-  await expect(this.testProtocolPage.historyDialog).toContainText(`History — ${protocolName}`);
+Then('the change history for that protocol should be displayed', async function () {
+  await expect(this.testProtocolPage.historyDialog).toContainText(`History — ${runProtocolName}`);
 });
 
 /**
- * "Bug_test" (the fixture the other Test Protocol Management scenarios reference) can't actually
- * be deleted - verified live, the backend rejects it with 400 "Cannot delete protocol with
- * campaigns" since real batches have been run against it, and the UI gives no visible error for
- * that rejection (the confirmation dialog just silently stays open). So this scenario creates its
- * own disposable, campaign-free protocol first (reusing the existing Liquid Analysis protocol
- * creation flow - see liquid_analysis_protocol_creation.steps.js), the same way this scenario
- * previously - unintentionally - discovered "Bug_test" wasn't a safe target. A unique per-run
- * name avoids "name already taken" collisions across runs.
+ * One Test Protocol per cucumber-js process, created on first use and shared by the Status /
+ * Edit / Duplicate / History scenarios, then deleted by the Delete scenario (last in the feature
+ * file) - so the run leaves nothing behind but the Duplicate scenario's copies. These scenarios
+ * used to target a hand-made "Bug_test" fixture, which disappeared from DEV (verified live
+ * 2026-09-29: a search for it returned 0 rows) and took every scenario using it down at once.
+ * Created through the Liquid Analysis protocol creation flow (liquid_analysis_protocol_creation.
+ * steps.js), with a unique per-run name to avoid "name already taken" collisions across runs.
  *
- * Long timeout for the same reason as "the user fills in the attribute rows and saves the
- * protocol" (liquid_analysis_protocol_creation.steps.js) - twelve rows' worth of selects/fills
- * through the real UI can run past Cucumber's default 180s step timeout. Given a longer budget
- * than that step's 300s: verified live, this step timed out at 300s specifically when run as
- * part of the full @testProtocolManagement group (which by this point has already run the
- * Duplicate scenario's own protocol creation earlier in the same run) - the identical step passed
- * standalone in under 5 minutes twice, so the slowdown is cumulative session/table growth, not a
- * logic issue, and needs more headroom than a lone run does.
+ * Long timeout: verified live, twelve rows' worth of selects/fills through the real UI can take
+ * several minutes, especially late in a full run as the protocol table grows.
  */
-Given('a disposable test protocol has been created', { timeout: 600 * 1000 }, async function () {
+let runProtocolName;
+
+Given('a test protocol has been created for this run', { timeout: 600 * 1000 }, async function () {
+  if (runProtocolName) return;
   this.dashboardPage = this.dashboardPage || new CampaignExecutionPage(this.page);
   const uniqueSuffix = Date.now().toString().slice(-6);
-  this.disposableProtocolName = `disposable_del_${uniqueSuffix}`;
+  const name = `run_protocol_${uniqueSuffix}`;
   await this.dashboardPage.protocolCreation.navigateToNewProtocolForm();
   await this.dashboardPage.protocolCreation.fillProtocolDetails({
-    name: this.disposableProtocolName,
-    syrupId: `DISP${uniqueSuffix}`,
-    customerFormula: 'disposable',
+    name,
+    syrupId: `RUN${uniqueSuffix}`,
+    customerFormula: 'run fixture',
   });
   await this.dashboardPage.protocolCreation.fillAttributeRowsAndSave();
+  runProtocolName = name;
   await this.testProtocolPage.open();
 });
 
 When('the user searches for that protocol in the Test Protocol search box', async function () {
-  await this.testProtocolPage.search(this.disposableProtocolName);
+  await this.testProtocolPage.search(runProtocolName);
 });
 
 When('the user clicks the delete action for that protocol', async function () {
-  await this.testProtocolPage.clickDeleteAction(this.disposableProtocolName);
+  await this.testProtocolPage.clickDeleteAction(runProtocolName);
 });
 
 Then('a deletion confirmation dialog should be displayed', async function () {
@@ -166,5 +166,5 @@ Then('a deletion confirmation dialog should be displayed', async function () {
 });
 
 Then('that protocol should no longer appear in the Test Protocol table', async function () {
-  await expect(this.testProtocolPage.rowFor(this.disposableProtocolName)).toHaveCount(0);
+  await expect(this.testProtocolPage.rowFor(runProtocolName)).toHaveCount(0);
 });

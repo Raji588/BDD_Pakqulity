@@ -110,6 +110,13 @@ class TestProtocolManagementPage extends BasePage {
     });
   }
 
+  /** Searches for `protocolName` first - the table is paginated 10 rows at a time and not sorted
+   *  by name (verified live: 193 protocols), so a named row is usually not on page 1 unsearched. */
+  async findRow(protocolName) {
+    await this.search(protocolName);
+    return this.rowFor(protocolName);
+  }
+
   /** Column order is Name, Syrup ID, Customer Formula, Status, ... - Status is the 4th cell. */
   statusCell(row) {
     return row.getByRole('cell').nth(3);
@@ -131,14 +138,22 @@ class TestProtocolManagementPage extends BasePage {
   }
 
   async clickEditAction(protocolName) {
+    await this.search(protocolName);
     await this.actionButton(protocolName, 'edit').click();
   }
 
+  /** Waits for the pre-filled form's attribute rows too - saving before they load is silently
+   *  blocked by validation (verified live: no request sent, no row created). */
   async clickCopyAction(protocolName) {
-    await this.actionButton(protocolName, 'copy').click();
+    await this.search(protocolName);
+    await this.openEditFormAndWaitForAttributes(
+      () => this.actionButton(protocolName, 'copy').click(),
+      this.page.locator('#attributes_0_testAttributeId')
+    );
   }
 
   async clickHistoryAction(protocolName) {
+    await this.search(protocolName);
     await this.actionButton(protocolName, 'history').click();
   }
 
@@ -156,7 +171,7 @@ class TestProtocolManagementPage extends BasePage {
    * original name would hit the same "name already taken" block documented for the plain create
    * flow (see LiquidAnalysisProtocolCreationPage), so this appends a per-run unique suffix to the
    * pre-filled name first. The resulting name is remembered on `lastDuplicateName` for the
-   * following assertion step.
+   * following assertion step. Returns the create (POST) response, or null if none was sent.
    */
   async saveDuplicateWithUniqueName() {
     const uniqueSuffix = Date.now().toString().slice(-6);
@@ -164,8 +179,7 @@ class TestProtocolManagementPage extends BasePage {
     this.lastDuplicateName = `${currentName}_dup${uniqueSuffix}`;
     await this.nameInput.click();
     await this.nameInput.fill(this.lastDuplicateName);
-    await this.saveProtocolButton.click();
-    await this.page.waitForTimeout(1500);
+    return this.saveAndCaptureResponse(this.saveProtocolButton, ['POST']);
   }
 }
 

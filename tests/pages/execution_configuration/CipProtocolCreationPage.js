@@ -216,7 +216,15 @@ class CipProtocolCreationPage extends BasePage {
   // Actions column order verified live: edit, copy, delete (no history button, unlike the Test
   // Protocol list's edit/copy/history/delete).
   async openCipProtocolForEditing(name) {
-    await this.rowActionButton(name, 0).click();
+    await this.openEditFormAndWaitForAttributes(
+      () => this.rowActionButton(name, 0).click(),
+      this.testAttributeField('testAttributeId')
+    );
+  }
+
+  /** Saves an edited protocol - see BasePage.saveAndCaptureResponse. */
+  async saveProtocolChanges() {
+    return this.saveAndCaptureResponse(this.saveProtocolButton);
   }
 
   async openCipProtocolForDeletion(name) {
